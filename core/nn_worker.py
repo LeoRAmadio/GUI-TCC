@@ -15,6 +15,7 @@ class HardwareTrainerThread(QThread):
         self.baud = baud
 
     def run(self):
+        driver = None
         try:
             # 1. Carrega o .pth (ou treina) e faz a calibração Int8
             w_conv, b_conv, w_fc, b_fc = carregar_ou_treinar(
@@ -38,4 +39,7 @@ class HardwareTrainerThread(QThread):
             self.finished_success.emit(driver)
 
         except Exception as e:
+            # Sem isso a porta ficava aberta e toda nova tentativa dava "Acesso negado"
+            if driver:
+                driver.close()
             self.finished_error.emit(str(e))
