@@ -938,4 +938,69 @@ Ao final da aula, cada grupo entrega um documento com:
 \fi
 \end{tarefabox}
 
+% ============================ APÊNDICE ============================
+\clearpage
+\titulopagina{azul}{APÊNDICE: MAPAS DE MEMÓRIA}
+{\small Referência de endereços do SoC RISC-V usado em todos os experimentos. Todo periférico é acessado com
+instruções comuns de \cod{lw}/\cod{sw} nos endereços abaixo (E/S mapeada em memória).}
+
+\secao{A.1 Mapa de endereços do SoC}
+{\small\arrayrulecolor{borda}\renewcommand{\arraystretch}{1.4}
+\noindent\begin{tabularx}{\linewidth}{|>{\raggedright\arraybackslash}m{1.85cm}|>{\centering\arraybackslash}m{2.25cm}|>{\centering\arraybackslash}m{2.25cm}|>{\centering\arraybackslash}m{1.55cm}|>{\raggedright\arraybackslash}X|}
+\hline
+\rowcolor{painelB}{\footnotesize\bfseries\color{titulo}Nome} & {\footnotesize\bfseries\color{titulo}Endereço base} &
+{\footnotesize\bfseries\color{titulo}Endereço final} & {\footnotesize\bfseries\color{titulo}Tamanho} &
+{\footnotesize\bfseries\color{titulo}Descrição} \\ \hline
+\textbf{\color{laranja}Boot ROM} & \cod{0x0000\_0000} & \cod{0x0000\_0FFF} & 4 KB   & Memória apenas de leitura de inicialização (\emph{bootloader}) \\ \hline
+{\color{suave}Reservado}         & \cod{0x0000\_1000} & \cod{0x07FF\_FFFF} & $\sim$128 MB & {\color{suave}Espaço não utilizado} \\ \hline
+\textbf{\color{verde}UART}       & \cod{0x1000\_0000} & \cod{0x1000\_FFFF} & 64 KB  & Controlador UART (comunicação serial) \\ \hline
+\textbf{\color{verde}GPIO}       & \cod{0x2000\_0000} & \cod{0x2000\_FFFF} & 64 KB  & Pinos de entrada/saída de propósito geral \\ \hline
+\textbf{\color{verde}VGA}        & \cod{0x3000\_0000} & \cod{0x3001\_FFFF} & 128 KB & Controlador de vídeo (VRAM) \\ \hline
+\textbf{\color{azul}DMA}         & \cod{0x4000\_0000} & \cod{0x4000\_FFFF} & 64 KB  & Controlador de acesso direto à memória \\ \hline
+\textbf{\color{roxo}CLINT}       & \cod{0x5000\_0000} & \cod{0x5000\_FFFF} & 64 KB  & \emph{Core Local Interrupt Controller} \\ \hline
+\textbf{\color{roxo}PLIC}        & \cod{0x6000\_0000} & \cod{0x6003\_FFFF} & 256 KB & \emph{Platform-Level Interrupt Controller} \\ \hline
+{\color{suave}Reservado}         & \cod{0x7000\_0000} & \cod{0x7FFF\_FFFF} & 256 MB & {\color{suave}Espaço não utilizado} \\ \hline
+\textbf{\color{laranja}RAM}      & \cod{0x8000\_0000} & \cod{0x8003\_FFFF} & 256 KB & Memória RAM principal \\ \hline
+{\color{suave}Reservado}         & \cod{0x8004\_0000} & \cod{0x8FFF\_FFFF} & $\sim$255 MB & {\color{suave}Espaço não utilizado} \\ \hline
+\textbf{\color{roxo}NPU}         & \cod{0x9000\_0000} & \cod{0x9FFF\_FFFF} & 256 MB & \emph{Neural Processing Unit} \\ \hline
+\end{tabularx}}
+
+\secao{A.2 Mapa de memória do GPIO}
+{\small Base \cod{0x2000\_0000}. Os nomes são os da tabela \gui{SOC MEMORY MAP} da aba de E/S (experimento 2).}
+\par\vspace{2mm}
+{\small\arrayrulecolor{borda}\renewcommand{\arraystretch}{1.4}
+\noindent\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}m{1.3cm}|>{\centering\arraybackslash}m{2.25cm}|>{\raggedright\arraybackslash}m{3.1cm}|>{\centering\arraybackslash}m{1.3cm}|>{\raggedright\arraybackslash}X|}
+\hline
+\rowcolor{painelB}{\footnotesize\bfseries\color{titulo}Offset} & {\footnotesize\bfseries\color{titulo}Endereço} &
+{\footnotesize\bfseries\color{titulo}Registrador} & {\footnotesize\bfseries\color{titulo}Acesso} &
+{\footnotesize\bfseries\color{titulo}Descrição} \\ \hline
+\cod{0x0} & \cod{0x2000\_0000} & \cod{GPIO\_LED\_DATA} & R/W & Padrão de bits exibido nos LEDs da placa \\ \hline
+\cod{0x4} & \cod{0x2000\_0004} & \cod{GPIO\_SW\_DATA}  & RO  & Estado das chaves (\emph{switches}) da placa \\ \hline
+\cod{0x8} & \cod{0x2000\_0008} & \cod{GPIO\_HEX\_DATA} & R/W & Valor exibido nos displays de 7 segmentos \\ \hline
+\end{tabularx}}
+
+\secao{A.3 Mapa de memória da UART}
+{\small Base \cod{0x1000\_0000}.}
+\par\vspace{2mm}
+\rotulo[verde]{REGISTRADOR DATA (OFFSET 0x0)}\par\vspace{1mm}
+{\small\arrayrulecolor{borda}\renewcommand{\arraystretch}{1.4}
+\noindent\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}m{2.0cm}|>{\raggedright\arraybackslash}X|}
+\hline
+\rowcolor{painelB}{\footnotesize\bfseries\color{titulo}Operação} & {\footnotesize\bfseries\color{titulo}Comportamento} \\ \hline
+\textbf{WRITE} & Escreve o byte na \emph{latch} de TX. Se \cod{TX\_BUSY = 0}, a transmissão começa automaticamente \\ \hline
+\textbf{READ}  & Lê o byte na cabeça da FIFO (operação \textbf{peek}: não remove o byte da fila) \\ \hline
+\end{tabularx}}
+
+\vspace{5mm}
+\rotulo[verde]{REGISTRADOR STATUS (OFFSET 0x4)}\par\vspace{1mm}
+{\small\arrayrulecolor{borda}\renewcommand{\arraystretch}{1.4}
+\noindent\begin{tabularx}{\linewidth}{|>{\centering\arraybackslash}m{1.0cm}|>{\raggedright\arraybackslash}m{2.4cm}|>{\centering\arraybackslash}m{1.9cm}|>{\raggedright\arraybackslash}X|}
+\hline
+\rowcolor{painelB}{\footnotesize\bfseries\color{titulo}Bit} & {\footnotesize\bfseries\color{titulo}Nome} &
+{\footnotesize\bfseries\color{titulo}Direção} & {\footnotesize\bfseries\color{titulo}Descrição} \\ \hline
+0 & \cod{TX\_BUSY}  & Leitura & \cod{1} = transmissor ocupado, \cod{0} = livre \\ \hline
+1 & \cod{RX\_VALID} & Leitura & \cod{1} = FIFO contém dados, \cod{0} = FIFO vazia \\ \hline
+2 & \cod{FLUSH}     & Escrita & \cod{1} = limpa toda a FIFO \\ \hline
+\end{tabularx}}
+
 \end{document}
