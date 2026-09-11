@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
 from PyQt5.QtGui import QTextOption, QColor, QFont, QTextCursor
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from core.connection_manager import ConnectionManager
+from core.paths import artifact_path
 import qtawesome as qta
 
 # ==========================================
@@ -510,8 +511,7 @@ class OSConsoleWidget(QWidget):
         self.target_baud = self.conn_mgr.get_baud()
         self.update_connection_params(self.target_port, self.target_baud)
 
-        base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        kernel_path = os.path.join(base_dir, "artefacts", "kernel.bin")
+        kernel_path = artifact_path("kernel.bin")
         
         payload = b''
         if os.path.exists(kernel_path):

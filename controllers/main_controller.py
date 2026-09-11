@@ -9,6 +9,7 @@ from PyQt5.QtCore import QTimer
 import qtawesome as qta
 from core.serial_worker import FPGALoader
 from core.connection_manager import ConnectionManager
+from core.paths import artifact_path
 
 class MiniAssembler:
     """Traduz código Assembly RISC-V RV32I para Código de Máquina (Inteiros 32 bits)"""
@@ -668,14 +669,14 @@ class MainController:
             objcopy_bin = f"riscv64-unknown-elf-objcopy{ext}"
 
         # Arquivos de suporte baseados na sua estrutura do Makefile
-        bsp_dir = os.path.join("artefacts", "bsp")
-        linker_script = os.path.join("artefacts", "link.ld")
-        startup_s = os.path.join("artefacts", "start.s")
+        bsp_dir = artifact_path("bsp")
+        linker_script = artifact_path("link.ld")
+        startup_s = artifact_path("start.s")
         bsp_sources = glob.glob(os.path.join(bsp_dir, "*.c"))
 
         if not os.path.exists(startup_s) or not os.path.exists(linker_script):
             if hasattr(self, 'io_view'):
-                self.io_view.log("[ERRO FATAL] Arquivos base 'start.s' ou 'link.ld' não encontrados na pasta 'artefacts/'.", "#ef4444")
+                self.io_view.log("[ERRO FATAL] Arquivos base 'start.s' ou 'link.ld' não encontrados na pasta 'artifacts/'.", "#ef4444")
                 self._reset_io_ui_state()
             return
 

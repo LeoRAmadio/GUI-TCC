@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
+from core.paths import artifact_path
 
 class Conv2D_Model(nn.Module):
     def __init__(self):
@@ -38,7 +39,7 @@ def empacotar_pesos_dma(W_int8):
 
 def carregar_ou_treinar(progress_cb=None):
     """Carrega o modelo .pth ou treina um novo, seguido pela calibração INT8."""
-    model_path = "./artefacts/cnn_pretrained.pth"
+    model_path = artifact_path("cnn_pretrained.pth")
     model = Conv2D_Model()
     
     # Precisamos do DataLoader pelo menos para a Calibração (evitar overflow)

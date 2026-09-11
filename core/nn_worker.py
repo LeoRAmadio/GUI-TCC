@@ -1,6 +1,7 @@
 from PyQt5.QtCore import QThread, pyqtSignal
 from core.nn_model import carregar_ou_treinar  # <--- Nome atualizado aqui
 from core.npu_driver import NPUDriverEdge
+from core.paths import artifact_path
 import os
 
 class HardwareTrainerThread(QThread):
@@ -24,7 +25,7 @@ class HardwareTrainerThread(QThread):
             driver = NPUDriverEdge(self.port, self.baud)
             
             # 2. Boot do firmware (Opcional, se existir cnn_server.bin)
-            bin_path = "./artefacts/cnn_server.bin"
+            bin_path = artifact_path("cnn_server.bin")
             if os.path.exists(bin_path):
                 self.progress.emit("Fazendo upload do firmware (cnn_server.bin)...")
                 driver.boot_app_bin(bin_path, progress_cb=lambda msg: self.progress.emit(msg))

@@ -10,7 +10,7 @@ from PyQt5.QtGui import QColor, QTextFormat, QTextCursor
 import qtawesome as qta
 
 from ..components.highlighter import RISCVHighlighter
-from artefacts import sample_code
+from artifacts import sample_code
 
 # ==========================================
 # WIDGET DO EMULADOR RV32I
