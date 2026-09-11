@@ -1,7 +1,8 @@
 # ui/main_window.py
 import os
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                             QPushButton, QLabel, QFrame, QStackedWidget, QDialog)
+                             QPushButton, QLabel, QFrame, QStackedWidget, QDialog,
+                             QFileDialog)
 from PyQt5.QtCore import QSize, QUrl, QTimer
 from PyQt5.QtGui import QDesktopServices
 from core.connection_manager import ConnectionManager
@@ -29,6 +30,9 @@ class RiscVEduApp(QMainWindow):
         
         # Inicia o Gerenciador Global
         self.conn_mgr = ConnectionManager()
+
+        # Última pasta usada nos diálogos de Save/Load
+        self._source_dir = os.path.expanduser("~")
         
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -158,11 +162,13 @@ class RiscVEduApp(QMainWindow):
         self.btn_save = QPushButton(" Save")
         self.btn_save.setIcon(qta.icon('fa5s.save', color='#8B9BB4'))
         self.btn_save.setProperty("class", "GhostBtn")
+        self.btn_save.clicked.connect(self.save_source)
         h_layout.addWidget(self.btn_save)
-        
+
         self.btn_load = QPushButton(" Load")
         self.btn_load.setIcon(qta.icon('fa5s.folder-open', color='#8B9BB4'))
         self.btn_load.setProperty("class", "GhostBtn")
+        self.btn_load.clicked.connect(self.load_source)
         h_layout.addWidget(self.btn_load)
         
         # CONEXÃO DO BOTÃO CONFIG
@@ -229,7 +235,7 @@ class RiscVEduApp(QMainWindow):
         self.status_lbl.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: 800; border: none; background: transparent;")
 
     def open_guide(self):
-        url = QUrl("https://risc-v-azedinha.github.io/RISC-V/")
+        url = QUrl("https://risc-v-azedinha.github.io/GUI-TCC/roteiro_experimentos.pdf")
         if not url.isValid():
             self.log("[ERRO] URL inválida.", "#ef4444")
             return
@@ -241,3 +247,67 @@ class RiscVEduApp(QMainWindow):
             if btn != active_btn:
                 btn.setChecked(False)
         active_btn.setChecked(True)
+
+        # Save/Load só fazem sentido nos labs com editor de código-fonte
+        has_source = index in self.SOURCE_LABS
+        self.btn_save.setVisible(has_source)
+        self.btn_load.setVisible(has_source)
+
+    # ==========================================
+    # SAVE / LOAD DO CÓDIGO-FONTE (LABS 1 E 2)
+    # ==========================================
+    # índice do lab -> (atributo da view, filtro do diálogo, nome sugerido)
+    SOURCE_LABS = {
+        0: ("rv32i_view", "Assembly RISC-V (*.s *.S *.asm)", "programa.s"),
+        1: ("io_view", "Código C (*.c)", "firmware.c"),
+    }
+
+    def _current_source_lab(self):
+        lab = self.SOURCE_LABS.get(self.stacked_widget.currentIndex())
+        if lab is None:
+            return None
+        attr, file_filter, default_name = lab
+        return getattr(self, attr), file_filter, default_name
+
+    def save_source(self):
+        lab = self._current_source_lab()
+        if lab is None:
+            return
+        view, file_filter, default_name = lab
+
+        start = os.path.join(self._source_dir, default_name)
+        path, _ = QFileDialog.getSaveFileName(self, "Salvar código-fonte", start, file_filter)
+        if not path:
+            return
+        if not os.path.splitext(path)[1]:
+            path += os.path.splitext(default_name)[1]
+
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(view.editor.toPlainText())
+        except OSError as e:
+            view.log(f"[ERRO] Não foi possível salvar '{path}': {e}", "#ef4444")
+            return
+        self._source_dir = os.path.dirname(path)
+        view.log(f">> Código salvo em {path}", "#10b981")
+
+    def load_source(self):
+        lab = self._current_source_lab()
+        if lab is None:
+            return
+        view, file_filter, _ = lab
+
+        path, _ = QFileDialog.getOpenFileName(self, "Abrir código-fonte", self._source_dir,
+                                              f"{file_filter};;Todos os arquivos (*)")
+        if not path:
+            return
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                code = f.read()
+        except (OSError, UnicodeDecodeError) as e:
+            view.log(f"[ERRO] Não foi possível abrir '{path}': {e}", "#ef4444")
+            return
+        view.editor.setPlainText(code)
+        self._source_dir = os.path.dirname(path)
+        view.log(f">> Código carregado de {path}", "#10b981")
