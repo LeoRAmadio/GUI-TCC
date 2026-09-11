@@ -19,17 +19,25 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # Mesmo TeX Live (apt) do ambiente de desenvolvimento (Ubuntu/Pop!_OS 24.04).
+    # A Open Sans vem do pacote fonts-open-sans (TrueType): a versão Type 1 do
+    # pacote TeX 'opensans' quebra o xdvipdfmx ("Error occurred while loading font").
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
+      - name: Instala TeX Live e fontes
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            latexmk texlive-xetex texlive-latex-base texlive-latex-recommended \
+            texlive-latex-extra texlive-pictures texlive-plain-generic \
+            texlive-lang-portuguese texlive-fonts-recommended \
+            fonts-open-sans fonts-dejavu-core
+
       - name: Compila o roteiro (XeLaTeX)
-        uses: xu-cheng/latex-action@v3
-        with:
-          root_file: roteiro_experimentos.tex
-          working_directory: docs
-          latexmk_use_xelatex: true
-          args: -file-line-error -halt-on-error -interaction=nonstopmode -outdir=../build/latex
+        working-directory: docs
+        run: latexmk -xelatex -file-line-error -halt-on-error -interaction=nonstopmode -outdir=../build/latex roteiro_experimentos.tex
 
       - name: Monta o site
         run: |
