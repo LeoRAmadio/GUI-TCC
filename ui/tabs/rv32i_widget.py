@@ -325,7 +325,7 @@ class RV32IWidget(QWidget):
         menu.addAction(toggle_bkp_action)
         
         # Adiciona a ação padrão de limpar BKP
-        clear_bkp_action = QAction(qta.icon('fa5r.circle', color='#8B9BB4'), "Limpar Breakpoint", self)
+        clear_bkp_action = QAction(qta.icon('fa5.circle', color='#8B9BB4'), "Limpar Breakpoint", self)
         clear_bkp_action.triggered.connect(self.clear_breakpoint)
         menu.addAction(clear_bkp_action)
         
