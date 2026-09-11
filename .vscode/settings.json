@@ -1,0 +1,30 @@
+{
+    // LaTeX Workshop: compila docs/roteiro_experimentos.tex com XeLaTeX via latexmk.
+    // Todos os arquivos gerados (.aux, .log, .fdb_latexmk, .synctex.gz, PDF...) vão
+    // para build/latex/ (ignorado pelo git), mantendo docs/ limpo.
+    "latex-workshop.latex.outDir": "%WORKSPACE_FOLDER%/build/latex",
+    "latex-workshop.latex.recipe.default": "latexmk (xelatex)",
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "latexmk (xelatex)",
+            "tools": ["latexmk-xelatex"]
+        }
+    ],
+    "latex-workshop.latex.tools": [
+        {
+            "name": "latexmk-xelatex",
+            "command": "latexmk",
+            "args": [
+                "-xelatex",
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "-outdir=%OUTDIR%",
+                "%DOC%"
+            ],
+            "env": {}
+        }
+    ],
+    "latex-workshop.latex.autoClean.run": "never",
+    "latex-workshop.view.pdf.viewer": "tab"
+}

@@ -4,4 +4,9 @@ __pycache__
 __pycache__/
 *.pyc
 data
-site/
+
+# Saídas do LaTeX (roteiro) e do PyInstaller (executável)
+build/latex/
+build/pages/
+build/pyinstaller/
+dist/
