@@ -13,3 +13,6 @@ dist/
 
 # GCC RISC-V baixado por tools/fetch_toolchain.py
 toolchain/
+
+# Resultado do teste de fumaça (python main.py --selftest)
+selftest.log

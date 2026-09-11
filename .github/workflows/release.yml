@@ -38,6 +38,19 @@ jobs:
       - name: Gera o executável (PyInstaller)
         run: pyinstaller GUI-TCC.spec --noconfirm --workpath build/pyinstaller --distpath dist
 
+      - name: Teste de fumaça do executável (abre, carrega o torch e fecha)
+        shell: pwsh
+        run: |
+          $exe = "dist/GUI-TCC/GUI-TCC.exe"
+          $log = "dist/GUI-TCC/selftest.log"
+          Get-Item dist/GUI-TCC/_internal/msvcp140.dll, dist/GUI-TCC/_internal/vcruntime140.dll |
+            ForEach-Object { "$($_.Name) $($_.VersionInfo.FileVersion)" }
+          $p = Start-Process -FilePath $exe -ArgumentList "--selftest" -PassThru
+          $null = $p.Handle  # garante o ExitCode depois do WaitForExit
+          if (-not $p.WaitForExit(180000)) { $p.Kill(); throw "O executável não fechou em 180 s" }
+          if (Test-Path $log) { Get-Content $log; Remove-Item $log } else { "selftest.log não foi gerado" }
+          if ($p.ExitCode -ne 0) { throw "O teste de fumaça falhou (código $($p.ExitCode))" }
+
       - name: Empacota
         shell: pwsh
         run: Compress-Archive -Path dist/GUI-TCC -DestinationPath GUI-TCC-windows-x64.zip
