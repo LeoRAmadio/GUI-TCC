@@ -424,6 +424,9 @@ class DMAWidget(QWidget):
     def toggle_simulation(self):
         if self.sim_state == 'IDLE' or self.sim_state == 'PAUSED':
             if self.sim_state == 'IDLE':
+                # RESTART: uma transferência anterior terminou, zera o estado antes de recomeçar
+                if self.cycles > 0:
+                    self.reset_ui()
                 try:
                     self.target_words = int(self.inp_bcr.text())
                 except:
@@ -456,8 +459,9 @@ class DMAWidget(QWidget):
         self.cpu_stalls = 0
         self.dma_stalls = 0
         self.current_words = 0
+        self.rr_last_served = 'CPU'
         self.last_cycle_winner = 'NONE'
-        
+
         self.btn_toggle.setText(" START")
         self.btn_toggle.setIcon(qta.icon('fa5s.play', color=BG_ELEMENT))
         self.btn_toggle.setStyleSheet(f"background-color: {GREEN}; border: none; color: {BG_ELEMENT}; border-radius: 6px; padding: 12px; font-weight: bold;")

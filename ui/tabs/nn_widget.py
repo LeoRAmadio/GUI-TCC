@@ -10,6 +10,7 @@ from PIL import Image
 
 # Importando a Thread de Treinamento extraída
 from core.nn_worker import HardwareTrainerThread
+from core.connection_manager import ConnectionManager
 
 # ==========================================
 # PALETA CYBERPUNK / NEON
@@ -208,11 +209,14 @@ class NNWidget(QWidget):
         self.loading_bar.setVisible(False)
         header.addWidget(self.loading_bar)
 
-        # INPUT E BOTÃO DE HARDWARE
-        self.inp_port = QLineEdit("/dev/ttyUSB1")
-        self.inp_port.setFixedWidth(130)
-        self.inp_port.setStyleSheet(f"background-color: {BG_ELEMENT}; border: 1px solid {BORDER}; border-radius: 4px; color: {NEON_CYAN}; padding: 6px; font-family: monospace; font-weight: bold;")
-        header.addWidget(self.inp_port)
+        # PORTA (somente leitura, definida globalmente no botão Config) E BOTÃO DE HARDWARE
+        self.conn_mgr = ConnectionManager()
+        self.lbl_port = QLabel()
+        self.lbl_port.setToolTip("Porta serial definida em Config")
+        self.lbl_port.setStyleSheet(f"background-color: {BG_ELEMENT}; border: 1px solid {BORDER}; border-radius: 4px; color: {NEON_CYAN}; padding: 6px; font-family: monospace; font-weight: bold;")
+        self.update_connection_params(self.conn_mgr.get_port(), self.conn_mgr.get_baud())
+        self.conn_mgr.config_updated.connect(self.update_connection_params)
+        header.addWidget(self.lbl_port)
 
         self.btn_hw = QPushButton(" Programar FPGA") 
         self.btn_hw.setIcon(qta.icon('fa5s.microchip', color=BG_ELEMENT))
@@ -437,6 +441,9 @@ class NNWidget(QWidget):
         
         self.npu_core.set_ready()
 
+    def update_connection_params(self, port, baud):
+        self.lbl_port.setText(f"{port} @ {baud}")
+
     # -------------------------------------------------------------
     # CONTROLE DA FPGA / TREINAMENTO
     # -------------------------------------------------------------
@@ -449,8 +456,7 @@ class NNWidget(QWidget):
         self.lbl_status.setStyleSheet(f"color: {NEON_YELLOW}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {BORDER}; border-radius: 6px; padding: 10px;")
         self.lbl_status.setText("Enviando Software e Pesos para os registradores (Arquitetura Output Stationary)... ⏳")
         
-        port = self.inp_port.text().strip()
-        self.worker = HardwareTrainerThread(port)
+        self.worker = HardwareTrainerThread(self.conn_mgr.get_port(), self.conn_mgr.get_baud())
         # Opcional: conectar mensagens da thread para a label
         self.worker.progress.connect(lambda msg: self.lbl_status.setText(f"Processando: {msg} ⏳"))
         self.worker.finished_success.connect(self.on_training_success)

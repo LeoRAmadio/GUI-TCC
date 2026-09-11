@@ -12,7 +12,8 @@ class RISCV_Emulator:
         self.memory: Dict[int, int] = {}
         self.pc: int = 0
         self.stage: int = 0
-        
+        self.exec_pc: int = 0  # PC da instrução em execução (capturado no IF)
+
         self.IR: str = ""
         self.op: str = ""
         self.rd: int = 0
@@ -72,6 +73,10 @@ class RISCV_Emulator:
     def get_current_line(self) -> int:
         return self.line_map.get(self.pc, -1)
 
+    def get_exec_line(self) -> int:
+        """Linha da instrução que está percorrendo os estágios (não o próximo PC)."""
+        return self.line_map.get(self.exec_pc, -1)
+
     def clock_tick(self) -> Tuple[bool, str, int]:
         if self.halted: return False, "", -1
 
@@ -79,6 +84,7 @@ class RISCV_Emulator:
         msg = ""
 
         if self.stage == 0: # IF
+            self.exec_pc = self.pc
             if self.pc >= len(self.instructions):
                 self.halted = True
                 return False, "Fim da execução (EOF).", current_stage

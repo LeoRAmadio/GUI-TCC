@@ -2,7 +2,7 @@
 import os
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                              QPushButton, QLabel, QFrame, QStackedWidget, QDialog)
-from PyQt5.QtCore import QSize, QUrl
+from PyQt5.QtCore import QSize, QUrl, QTimer
 from PyQt5.QtGui import QDesktopServices
 from core.connection_manager import ConnectionManager
 import qtawesome as qta
@@ -41,6 +41,12 @@ class RiscVEduApp(QMainWindow):
 
         # Inscreve-se nas atualizações de configuração
         self.conn_mgr.config_updated.connect(self.update_global_header)
+
+        # Monitora periodicamente se a porta configurada está presente
+        self.serial_status_timer = QTimer(self)
+        self.serial_status_timer.timeout.connect(self.refresh_serial_status)
+        self.serial_status_timer.start(1000)
+        self.refresh_serial_status()
 
     @property
     def request_reset(self): return self.rv32i_view.request_reset
@@ -88,9 +94,9 @@ class RiscVEduApp(QMainWindow):
             (" 1. Core RV32I", "fa5s.microchip", True, 0),
             (" 2. Drivers & I/O", "fa5s.plug", True, 1),
             (" 3. DMA Controller", "fa5s.bolt", True, 2),
-            (" 4. NPU Micro-Arch", "fa5s.brain", True, 3),
-            (" 5. Tiling & Scaling", "fa5s.layer-group", True, 4),
-            (" 6. OS Console", "fa5s.terminal", True, 5),
+            (" 4. OS Console", "fa5s.terminal", True, 3),
+            (" 5. NPU Micro-Arch", "fa5s.brain", True, 4),
+            (" 6. Tiling & Scaling", "fa5s.layer-group", True, 5),
             (" 7. Neural Network", "fa5s.project-diagram", True, 6)
         ]
         
@@ -138,14 +144,14 @@ class RiscVEduApp(QMainWindow):
         
         h_layout.addSpacing(25)
         
-        status_icon = QLabel()
-        status_icon.setPixmap(qta.icon('fa5s.circle', color='#10b981').pixmap(12, 12))
-        status_icon.setStyleSheet("border: none; background: transparent;")
-        h_layout.addWidget(status_icon)
-        
-        status_lbl = QLabel("FPGA SERIAL: CONNECTED")
-        status_lbl.setStyleSheet("color: #10b981; font-size: 11px; font-weight: 800; border: none; background: transparent;")
-        h_layout.addWidget(status_lbl)
+        # Estado real preenchido por refresh_serial_status()
+        self.status_icon = QLabel()
+        self.status_icon.setStyleSheet("border: none; background: transparent;")
+        h_layout.addWidget(self.status_icon)
+
+        self.status_lbl = QLabel()
+        h_layout.addWidget(self.status_lbl)
+        self._serial_present = None
         
         h_layout.addStretch()
         
@@ -187,10 +193,10 @@ class RiscVEduApp(QMainWindow):
         self.stacked_widget.addWidget(self.rv32i_view)      # Índice 0
         self.stacked_widget.addWidget(self.io_view)         # Índice 1
         self.stacked_widget.addWidget(self.dma_view)        # Índice 2
-        self.stacked_widget.addWidget(self.npu_view)        # Índice 3
-        self.stacked_widget.addWidget(self.tiling_view)     # Índice 4
-        self.stacked_widget.addWidget(self.os_console_view) # Índice 5
-        self.stacked_widget.addWidget(self.nn_view)         # Índice 6 
+        self.stacked_widget.addWidget(self.os_console_view) # Índice 3
+        self.stacked_widget.addWidget(self.npu_view)        # Índice 4
+        self.stacked_widget.addWidget(self.tiling_view)     # Índice 5
+        self.stacked_widget.addWidget(self.nn_view)         # Índice 6
         
         layout.addWidget(self.stacked_widget)
         self.main_layout.addWidget(self.main_content)
@@ -208,6 +214,19 @@ class RiscVEduApp(QMainWindow):
     def update_global_header(self, port, baud):
         """Callback chamada pelo Manager sempre que a porta é alterada."""
         self.term_info.setText(f"{port} @ {baud} baud")
+        self.refresh_serial_status()
+
+    def refresh_serial_status(self):
+        """Atualiza o indicador do cabeçalho conforme a presença real da porta serial."""
+        present = self.conn_mgr.is_port_present()
+        if present == self._serial_present:
+            return
+        self._serial_present = present
+        color = '#10b981' if present else '#ef4444'
+        text = "FPGA SERIAL: CONNECTED" if present else "FPGA SERIAL: DISCONNECTED"
+        self.status_icon.setPixmap(qta.icon('fa5s.circle', color=color).pixmap(12, 12))
+        self.status_lbl.setText(text)
+        self.status_lbl.setStyleSheet(f"color: {color}; font-size: 11px; font-weight: 800; border: none; background: transparent;")
 
     def open_guide(self):
         url = QUrl("https://risc-v-azedinha.github.io/RISC-V/")

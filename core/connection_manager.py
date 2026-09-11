@@ -1,3 +1,5 @@
+import os
+from serial.tools import list_ports
 from PyQt5.QtCore import QObject, pyqtSignal
 
 class ConnectionManager(QObject):
@@ -6,18 +8,23 @@ class ConnectionManager(QObject):
     Qualquer widget pode assinar o sinal 'config_updated' para atualizar a sua UI.
     """
     _instance = None
-    
+    _initialized = False
+
     # Sinal emitido sempre que as configurações mudam (envia porta e baudrate)
     config_updated = pyqtSignal(str, int)
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(ConnectionManager, cls).__new__(cls)
-            cls._instance.__init_singleton()
         return cls._instance
 
-    def __init_singleton(self):
+    def __init__(self):
+        # O Python chama __init__ a cada ConnectionManager(); reinicializar o QObject
+        # descartaria as conexões de sinal já feitas pelas outras abas.
+        if ConnectionManager._initialized:
+            return
         super().__init__()
+        ConnectionManager._initialized = True
         # Configurações padrão seguras (podem ser lidas de um ficheiro JSON/INI no futuro)
         self._port = "/dev/ttyUSB1"
         self._baud = 921600
@@ -33,3 +40,10 @@ class ConnectionManager(QObject):
 
     def get_baud(self):
         return self._baud
+
+    def is_port_present(self) -> bool:
+        """Verifica se a porta configurada existe fisicamente (placa plugada no USB)."""
+        if any(p.device == self._port for p in list_ports.comports()):
+            return True
+        # Em sistemas POSIX, cobre symlinks (/dev/serial/by-id/...) e pseudo-terminais
+        return os.name != 'nt' and os.path.exists(self._port)

@@ -261,10 +261,11 @@ class MainController:
             else:
                 self.view.highlight_line(-1) # Força um índice inválido para remover o destaque
                 
-            # 4. Remove os break-points do hardware e aciona rotinas de limpeza visual
-            self.handle_clr_bkp()
-            if hasattr(self.view, 'clear_breakpoints_ui'):
-                self.view.clear_breakpoints_ui()
+            # 4. Remove o break-point visual e, se houver sessão de debug aberta, o da FPGA
+            #    (não abre a porta serial só para isso quando estamos em simulação)
+            self.view.clear_breakpoints_ui()
+            if self.debug_ser and self.debug_ser.is_open:
+                self.handle_clr_bkp()
             
             # 5. Restabelece o hardware para o estado inicial se estivesse conectado em modo placa
             if self.exec_mode == 'HW':
@@ -383,8 +384,11 @@ class MainController:
             self._check_code_changes() 
             if not self.model.halted:
                 success, msg, stage = self.model.clock_tick()
-                self.view.update_hardware_ui(self.model.regs, self.model.memory, self.model.stage)
-                self.view.highlight_line(self.model.get_current_line())
+                # Exibe o estágio que ACABOU de executar (o mesmo do log) e a linha
+                # da instrução dona desse estágio, e não o próximo estado da FSM.
+                # Ex.: 'j' acende IF -> ID -> EX na própria linha antes de saltar.
+                self.view.update_hardware_ui(self.model.regs, self.model.memory, stage)
+                self.view.highlight_line(self.model.get_exec_line())
                 if msg:
                     self.view.log(msg, ["#38bdf8", "#818cf8", "#c084fc", "#f472b6", "#fb923c"][stage] if 0<=stage<=4 else "#cbd5e1")
 

@@ -363,8 +363,12 @@ class RV32IWidget(QWidget):
         self.request_set_bkp.emit(self.bkp_line_idx)
 
     def clear_breakpoint(self):
-        self.bkp_line_idx = -1
-        self.update_editor_highlights() 
+        self.clear_breakpoints_ui()
         self.request_clr_bkp.emit()
+
+    def clear_breakpoints_ui(self):
+        """Remove apenas a marcação visual do breakpoint (sem falar com o hardware)."""
+        self.bkp_line_idx = -1
+        self.update_editor_highlights()
 
     
