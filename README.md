@@ -23,10 +23,17 @@ GUI-TCC/
 │   └── tabs/             # Um widget por experimento/aba
 ├── core/                 # Modelos e lógica de simulação (emulador, NPU, drivers seriais)
 ├── controllers/          # Camada de controle (MVC) entre UI e core
-├── artefacts/            # Binários e firmware (kernel, bootloader, pesos treinados)
+├── artifacts/            # Binários e firmware (kernel, bootloader, pesos treinados)
 ├── build/                # Artefatos de build gerados para a FPGA
-└── docs/                 # Manual de laboratório (MkDocs) — ver seção abaixo
+├── docs/                 # Roteiro de experimentos (LaTeX) — ver seção abaixo
+└── GUI-TCC.spec          # Receita do PyInstaller para o executável Windows
 ```
+
+## Download (Windows)
+
+A versão pronta para Windows está na página de [Releases](https://github.com/RISC-V-Azedinha/GUI-TCC/releases): baixe o `GUI-TCC-windows-x64.zip`, extraia e execute `GUI-TCC.exe` (não é preciso instalar Python).
+
+> A compilação C → FPGA da aba **I/O** ainda requer o toolchain `riscv64-unknown-elf-gcc` no `PATH`.
 
 ## Como rodar a aplicação
 
@@ -52,6 +59,23 @@ python3 main.py
 
 > Para usar as abas que dependem de hardware real (Upload FPGA, Sync Hardware, OS Console, NN Inference), é necessário ter a placa FPGA conectada via USB/serial.
 
-## Manual de Laboratório
+## Roteiro de Experimentos
 
-Os roteiros didáticos de cada experimento estão em [`docs/`](docs/index.md), publicados como um site com [MkDocs](https://www.mkdocs.org/). Para visualizar, acesso o link: [Roteiros](https://risc-v-azedinha.github.io/GUI-TCC/exp01_rv32i/).
+O roteiro das aulas práticas está em [`docs/roteiro_experimentos.tex`](docs/roteiro_experimentos.tex). A cada push em `main` que altere `docs/`, o GitHub Actions compila o PDF e o publica no GitHub Pages: [Roteiro (PDF)](https://risc-v-azedinha.github.io/GUI-TCC/roteiro_experimentos.pdf).
+
+Para compilar localmente no VS Code, use a extensão **LaTeX Workshop** (configurada em `.vscode/settings.json`). Pela linha de comando:
+
+```bash
+cd docs && latexmk -xelatex -outdir=../build/latex roteiro_experimentos.tex
+```
+
+Os arquivos intermediários e o PDF ficam em `build/latex/`, que é ignorado pelo git.
+
+## Publicando uma release
+
+Envie uma tag de versão; o workflow `.github/workflows/release.yml` gera o executável Windows com PyInstaller e cria a release com o `.zip`:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```

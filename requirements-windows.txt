@@ -1,0 +1,12 @@
+# Dependências do executável Windows (usado por .github/workflows/release.yml).
+# Diferente de requirements.txt, não inclui os pacotes CUDA/triton (exclusivos do Linux):
+# no Windows, o torch do PyPI já é a build CPU.
+numpy==2.4.4
+pillow==12.2.0
+PyQt5==5.15.11
+pyserial==3.5
+QtAwesome==1.4.2
+QtPy==2.4.3
+torch==2.11.0
+torchvision==0.26.0
+pyinstaller>=6.10

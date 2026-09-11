@@ -1,0 +1,50 @@
+name: Release (Windows .exe)
+
+# Publica uma release ao enviar uma tag de versão:
+#   git tag v1.0.0 && git push origin v1.0.0
+# Execução manual (workflow_dispatch) só gera o .zip como artifact da run, sem release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-windows.txt
+
+      - name: Instala dependências
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-windows.txt
+
+      - name: Gera o executável (PyInstaller)
+        run: pyinstaller GUI-TCC.spec --noconfirm --workpath build/pyinstaller --distpath dist
+
+      - name: Empacota
+        shell: pwsh
+        run: Compress-Archive -Path dist/GUI-TCC -DestinationPath GUI-TCC-windows-x64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GUI-TCC-windows-x64
+          path: GUI-TCC-windows-x64.zip
+
+      - name: Publica a release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" GUI-TCC-windows-x64.zip \
+            --title "GUI-TCC $GITHUB_REF_NAME" --generate-notes

@@ -1,0 +1,58 @@
+name: Roteiro (PDF) -> GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compila o roteiro (XeLaTeX)
+        uses: xu-cheng/latex-action@v3
+        with:
+          root_file: roteiro_experimentos.tex
+          working_directory: docs
+          latexmk_use_xelatex: true
+          args: -file-line-error -halt-on-error -interaction=nonstopmode -outdir=../build/latex
+
+      - name: Monta o site
+        run: |
+          mkdir -p build/pages
+          cp build/latex/roteiro_experimentos.pdf build/pages/
+          cat > build/pages/index.html <<'EOF'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>Roteiro de Experimentos - GUI-TCC</title>
+          <meta http-equiv="refresh" content="0; url=roteiro_experimentos.pdf">
+          <a href="roteiro_experimentos.pdf">Abrir o roteiro (PDF)</a>
+          EOF
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/pages
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}roteiro_experimentos.pdf
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
