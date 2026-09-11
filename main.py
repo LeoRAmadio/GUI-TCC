@@ -59,6 +59,13 @@ elif platform.system() == "Windows":
     except (OSError, AttributeError, ZeroDivisionError):
         pass  # mantém a escala do sistema
 
+# Executável sem console (PyInstaller windowed): sys.stdout/sys.stderr são None, e bibliotecas
+# que escrevem progresso (ex.: o download do MNIST no Lab 7) falhariam com "'NoneType' ... 'write'".
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, "w", encoding="utf-8")
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, "w", encoding="utf-8")
+
 # --selftest: usado pelo CI da release. Abre a janela principal, fecha em seguida e grava
 # o resultado em selftest.log (o executável não tem console para exibir erros).
 SELFTEST = "--selftest" in sys.argv
