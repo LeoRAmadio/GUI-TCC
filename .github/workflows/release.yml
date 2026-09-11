@@ -28,6 +28,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-windows.txt
 
+      - name: Baixa o GCC RISC-V (Lab 2)
+        run: python tools/fetch_toolchain.py --platform win32-x64
+
+      - name: Testa o GCC RISC-V com o firmware padrão do Lab 2
+        shell: bash
+        run: python tools/check_toolchain.py --require-bundled
+
       - name: Gera o executável (PyInstaller)
         run: pyinstaller GUI-TCC.spec --noconfirm --workpath build/pyinstaller --distpath dist
 

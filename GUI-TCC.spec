@@ -1,6 +1,7 @@
 # GUI-TCC.spec - build do executável com PyInstaller
 #   pyinstaller GUI-TCC.spec --noconfirm --workpath build/pyinstaller --distpath dist
 # Gera dist/GUI-TCC/GUI-TCC.exe (modo onedir: abre rápido, sem extrair o torch a cada execução).
+import os
 
 datas = [
     ('artifacts/kernel.bin', 'artifacts'),
@@ -10,6 +11,10 @@ datas = [
     ('artifacts/start.s', 'artifacts'),
     ('artifacts/bsp', 'artifacts/bsp'),
 ]
+
+# GCC RISC-V do Lab 2, baixado antes do build por: python tools/fetch_toolchain.py
+if os.path.isdir('toolchain'):
+    datas.append(('toolchain', 'toolchain'))
 
 a = Analysis(
     ['main.py'],
