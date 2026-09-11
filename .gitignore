@@ -10,3 +10,6 @@ build/latex/
 build/pages/
 build/pyinstaller/
 dist/
+
+# GCC RISC-V baixado por tools/fetch_toolchain.py
+toolchain/

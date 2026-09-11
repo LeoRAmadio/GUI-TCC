@@ -33,7 +33,13 @@ GUI-TCC/
 
 A versão pronta para Windows está na página de [Releases](https://github.com/RISC-V-Azedinha/GUI-TCC/releases): baixe o `GUI-TCC-windows-x64.zip`, extraia e execute `GUI-TCC.exe` (não é preciso instalar Python).
 
-> A compilação C → FPGA da aba **I/O** ainda requer o toolchain `riscv64-unknown-elf-gcc` no `PATH`.
+O executável já inclui o GCC RISC-V (xPack `riscv-none-elf-gcc`) usado pela aba **I/O**; ele é adicionado ao `PATH` da aplicação automaticamente, sem instalação extra.
+
+Rodando pelo código-fonte, a aba **I/O** usa o toolchain do sistema (`riscv64-unknown-elf-gcc`, ex.: pacotes `gcc-riscv64-unknown-elf` e `picolibc-riscv64-unknown-elf` no Ubuntu) ou uma cópia local baixada com:
+
+```bash
+python3 tools/fetch_toolchain.py
+```
 
 ## Como rodar a aplicação
 

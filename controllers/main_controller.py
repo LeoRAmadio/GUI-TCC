@@ -10,6 +10,7 @@ import qtawesome as qta
 from core.serial_worker import FPGALoader
 from core.connection_manager import ConnectionManager
 from core.paths import artifact_path
+from core.toolchain import find_toolchain, gcc_command, NO_WINDOW
 
 class MiniAssembler:
     """Traduz código Assembly RISC-V RV32I para Código de Máquina (Inteiros 32 bits)"""
@@ -657,22 +658,20 @@ class MainController:
                 self._reset_io_ui_state()
             return
 
-        # 2. RESOLVE OS CAMINHOS DO TOOLCHAIN EMBUTIDO
-        # Assume que o toolchain está na pasta 'toolchain/bin' na raiz da sua aplicação
-        ext = ".exe" if os.name == 'nt' else ""
-        gcc_bin = os.path.join("toolchain", "bin", f"riscv64-unknown-elf-gcc{ext}")
-        objcopy_bin = os.path.join("toolchain", "bin", f"riscv64-unknown-elf-objcopy{ext}")
-
-        # Fallback de segurança: se não achar a pasta 'toolchain' local, tenta usar a variável global (PATH)
-        if not os.path.exists(gcc_bin):
-            gcc_bin = f"riscv64-unknown-elf-gcc{ext}"
-            objcopy_bin = f"riscv64-unknown-elf-objcopy{ext}"
+        # 2. RESOLVE O TOOLCHAIN (distribuído com a aplicação ou instalado no sistema)
+        toolchain = find_toolchain()
+        if toolchain is None:
+            if hasattr(self, 'io_view'):
+                self.io_view.log("[ERRO FATAL] RISC-V Toolchain não encontrado! Instale o riscv64-unknown-elf-gcc "
+                                 "ou rode 'python tools/fetch_toolchain.py'.", "#ef4444")
+                self._reset_io_ui_state()
+            return
+        gcc_bin, objcopy_bin, libc_flags = toolchain
 
         # Arquivos de suporte baseados na sua estrutura do Makefile
         bsp_dir = artifact_path("bsp")
         linker_script = artifact_path("link.ld")
         startup_s = artifact_path("start.s")
-        bsp_sources = glob.glob(os.path.join(bsp_dir, "*.c"))
 
         if not os.path.exists(startup_s) or not os.path.exists(linker_script):
             if hasattr(self, 'io_view'):
@@ -684,19 +683,10 @@ class MainController:
         if hasattr(self, 'io_view'):
             self.io_view.log(">> Compilando código fonte via RISC-V GCC...", "#38bdf8")
             
-        gcc_cmd = [
-            gcc_bin,
-            "-march=rv32i", "-mabi=ilp32", "-nostdlib", "-nostartfiles", "-g", "--specs=picolibc.specs",
-            f"-I{bsp_dir}",
-            "-T", linker_script,
-            "-o", elf_path,
-            startup_s,
-            *bsp_sources,
-            c_file_path
-        ]
+        gcc_cmd = gcc_command(gcc_bin, libc_flags, elf_path, c_file_path)
 
         try:
-            result_gcc = subprocess.run(gcc_cmd, capture_output=True, text=True)
+            result_gcc = subprocess.run(gcc_cmd, capture_output=True, text=True, creationflags=NO_WINDOW)
             if result_gcc.returncode != 0:
                 if hasattr(self, 'io_view'):
                     self.io_view.log(f"[ERRO DE COMPILAÇÃO C]\n{result_gcc.stderr}", "#ef4444")
@@ -725,7 +715,7 @@ class MainController:
         ]
 
         try:
-            result_obj = subprocess.run(objcopy_cmd, capture_output=True, text=True)
+            result_obj = subprocess.run(objcopy_cmd, capture_output=True, text=True, creationflags=NO_WINDOW)
             if result_obj.returncode != 0:
                 if hasattr(self, 'io_view'):
                     self.io_view.log(f"[ERRO NO OBJCOPY]\n{result_obj.stderr}", "#ef4444")

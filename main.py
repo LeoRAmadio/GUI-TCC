@@ -31,8 +31,12 @@ from core.npu import NPUModel
 from ui.main_window import RiscVEduApp
 from controllers.main_controller import MainController
 from controllers.npu_controller import NPUController
+from core.toolchain import add_bundled_to_path
 
 def main():
+    # Disponibiliza o GCC RISC-V distribuído com a aplicação (Lab 2) para os subprocessos
+    add_bundled_to_path()
+
     QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
     QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     
