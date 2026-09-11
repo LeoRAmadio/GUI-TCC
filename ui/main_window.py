@@ -96,11 +96,11 @@ class RiscVEduApp(QMainWindow):
         self.nav_buttons = []
         labs = [
             (" 1. Core RV32I", "fa5s.microchip", True, 0),
-            (" 2. Drivers & I/O", "fa5s.plug", True, 1),
+            (" 2. Drivers && I/O", "fa5s.plug", True, 1),
             (" 3. DMA Controller", "fa5s.bolt", True, 2),
             (" 4. OS Console", "fa5s.terminal", True, 3),
             (" 5. NPU Micro-Arch", "fa5s.brain", True, 4),
-            (" 6. Tiling & Scaling", "fa5s.layer-group", True, 5),
+            (" 6. Tiling && Scaling", "fa5s.layer-group", True, 5),
             (" 7. Neural Network", "fa5s.project-diagram", True, 6)
         ]
         
