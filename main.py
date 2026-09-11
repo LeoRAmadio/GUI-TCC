@@ -3,6 +3,33 @@ import os
 import sys
 import platform
 
+# Tamanho mínimo (px lógicos, com a moldura da janela) para os painéis não se sobreporem:
+# largura do lab RV32I + barra lateral e altura do lab NPU + cabeçalho (minimumSizeHint 1562x940).
+MIN_WINDOW_W, MIN_WINDOW_H = 1580, 980
+
+
+def fit_scale(work_w: float, work_h: float, os_scale: float) -> float:
+    """Maior escala (até a do sistema) com a qual a janela mínima cabe na área útil (px físicos)."""
+    return min(os_scale, work_w / MIN_WINDOW_W, work_h / MIN_WINDOW_H)
+
+
+def _windows_screen():
+    """Área útil da tela principal em px físicos e escala do Windows, lidas antes do Qt existir."""
+    import ctypes
+    from ctypes import wintypes
+    user32, gdi32 = ctypes.windll.user32, ctypes.windll.gdi32
+    hdc = user32.GetDC(0)
+    try:
+        # DESKTOPHORZRES (físico) / HORZRES (virtualizado enquanto o processo não é DPI-aware)
+        virtualization = gdi32.GetDeviceCaps(hdc, 118) / gdi32.GetDeviceCaps(hdc, 8)
+    finally:
+        user32.ReleaseDC(0, hdc)
+    work = wintypes.RECT()
+    user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(work), 0)  # SPI_GETWORKAREA
+    os_scale = ctypes.windll.shcore.GetScaleFactorForDevice(0) / 100
+    return (work.right - work.left) * virtualization, (work.bottom - work.top) * virtualization, os_scale
+
+
 # =====================================================================
 # TRUQUES AGRESSIVOS PARA MODO ESCURO E SCALING (LINUX & WINDOWS)
 # =====================================================================
@@ -20,6 +47,17 @@ if platform.system() == "Linux":
 
 elif platform.system() == "Windows":
     sys.argv += ['-platform', 'windows:darkmode=1']
+
+    # Usa a escala do Windows sem arredondar (o Qt 5 transformaria 150% em 200%) e, se a
+    # janela mínima não couber na tela, reduz a escala só o necessário, mantendo a proporção.
+    os.environ['QT_SCALE_FACTOR_ROUNDING_POLICY'] = 'PassThrough'
+    try:
+        _work_w, _work_h, _os_scale = _windows_screen()
+        _scale = fit_scale(_work_w, _work_h, _os_scale)
+        if _scale < _os_scale:
+            os.environ['QT_SCALE_FACTOR'] = f"{_scale / _os_scale:.3f}"
+    except (OSError, AttributeError, ZeroDivisionError):
+        pass  # mantém a escala do sistema
 
 # --selftest: usado pelo CI da release. Abre a janela principal, fecha em seguida e grava
 # o resultado em selftest.log (o executável não tem console para exibir erros).
@@ -89,13 +127,25 @@ def main():
 
     app.aboutToQuit.connect(rv32i_controller.cleanup_hardware)
 
-    main_window.show()
+    # Com a escala reduzida para caber na tela, a janela ocupa toda a área útil
+    if platform.system() == "Windows" and "QT_SCALE_FACTOR" in os.environ:
+        main_window.showMaximized()
+    else:
+        main_window.show()
 
     if SELFTEST:
         toolchain = find_toolchain()
         _selftest_log(f"torch {torch.__version__}: tensor {torch.ones(2).sum().item()}")
         _selftest_log(f"toolchain: {toolchain[0] if toolchain else 'NAO ENCONTRADO'}")
         _selftest_log(f"janela principal: {main_window.windowTitle()}")
+
+        def _report_geometry():
+            avail = app.primaryScreen().availableGeometry()
+            frame = main_window.frameGeometry()
+            _selftest_log(f"escala: {main_window.devicePixelRatioF():.3f} | área útil: {avail.width()}x{avail.height()} | "
+                          f"janela: {frame.width()}x{frame.height()} | cabe na tela: {avail.contains(frame)}")
+
+        QTimer.singleShot(1000, _report_geometry)
         QTimer.singleShot(1500, app.quit)
 
     sys.exit(app.exec_())
