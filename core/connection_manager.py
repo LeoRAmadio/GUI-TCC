@@ -28,6 +28,7 @@ class ConnectionManager(QObject):
         # Configurações padrão seguras (podem ser lidas de um ficheiro JSON/INI no futuro)
         self._port = "/dev/ttyUSB1"
         self._baud = 921600
+        self._holder = None  # (dono, callback que fecha a porta)
 
     def set_config(self, port: str, baud: int):
         self._port = port
@@ -40,6 +41,19 @@ class ConnectionManager(QObject):
 
     def get_baud(self):
         return self._baud
+
+    # No Windows uma porta COM só pode estar aberta em um lugar por vez ("Acesso negado").
+    # Quem vai abrir a porta chama claim_port(); o dono anterior é avisado para fechá-la antes.
+    def claim_port(self, owner: str, release_cb) -> None:
+        holder = self._holder
+        if holder is not None and holder[0] != owner:
+            self._holder = None
+            holder[1]()
+        self._holder = (owner, release_cb)
+
+    def release_port(self, owner: str) -> None:
+        if self._holder is not None and self._holder[0] == owner:
+            self._holder = None
 
     def is_port_present(self) -> bool:
         """Verifica se a porta configurada existe fisicamente (placa plugada no USB)."""

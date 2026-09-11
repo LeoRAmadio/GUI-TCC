@@ -456,6 +456,8 @@ class NNWidget(QWidget):
         self.lbl_status.setStyleSheet(f"color: {NEON_YELLOW}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {BORDER}; border-radius: 6px; padding: 10px;")
         self.lbl_status.setText("Enviando Software e Pesos para os registradores (Arquitetura Output Stationary)...")
         
+        # No Windows a porta COM é exclusiva: pede ao dono atual (ex.: lab 1) que a libere
+        self.conn_mgr.claim_port("nn", self.release_serial)
         self.worker = HardwareTrainerThread(self.conn_mgr.get_port(), self.conn_mgr.get_baud())
         # Opcional: conectar mensagens da thread para a label
         self.worker.progress.connect(lambda msg: self.lbl_status.setText(f"Processando: {msg}"))
@@ -475,7 +477,21 @@ class NNWidget(QWidget):
         
         self.unlock_interface()
 
+    def release_serial(self):
+        """Fecha a conexão com a FPGA quando outro laboratório precisa da porta serial."""
+        self.conn_mgr.release_port("nn")
+        if self.driver:
+            self.driver.close()
+            self.driver = None
+        self.clear_ui()
+        self.lock_interface()
+        self.npu_core.set_idle()
+        self.btn_hw.setText(" Programar FPGA")
+        self.lbl_status.setStyleSheet(f"color: {NEON_YELLOW}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {BORDER}; border-radius: 6px; padding: 10px;")
+        self.lbl_status.setText("Porta serial liberada para outro laboratório. Pressione 'Programar FPGA' para reconectar.")
+
     def on_training_error(self, err_msg):
+        self.conn_mgr.release_port("nn")
         self.loading_bar.setVisible(False)
         self.btn_hw.setEnabled(True)
         self.btn_hw.setText(" Programar FPGA")

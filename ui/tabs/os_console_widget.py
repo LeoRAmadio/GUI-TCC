@@ -128,6 +128,7 @@ class SerialMonitorWorker(QThread):
         self.running = True
         self.to_send = b''
         self.rx_buffer = ""
+        self.error = None  # motivo da falha que encerrou o worker (exibido na tela de conexão)
 
     def send_data(self, data: bytes):
         self.to_send += data
@@ -186,6 +187,7 @@ class SerialMonitorWorker(QThread):
                     
                     self.log_msg.emit("Upload finalizado! SO Inicializando...", "success")
                 else:
+                    self.error = "Falha no handshake com o bootloader da FPGA."
                     self.log_msg.emit("Falha no Handshake. Inicialização abortada.", "error")
                     return
 
@@ -243,6 +245,7 @@ class SerialMonitorWorker(QThread):
                 time.sleep(0.01)
 
         except Exception as e:
+            self.error = str(e)
             self.log_msg.emit(f"Erro Serial: {str(e)}", "error")
         finally:
             if self.ser and self.ser.is_open:
@@ -327,9 +330,10 @@ class OSConsoleWidget(QWidget):
         conn_layout = QVBoxLayout(page_connect)
         conn_layout.setAlignment(Qt.AlignCenter)
         
-        lbl_closed = QLabel("Serial Connection Closed")
-        lbl_closed.setStyleSheet(f"color: {TEXT_SECONDARY}; font-family: monospace; border: none; margin-bottom: 10px;")
-        lbl_closed.setAlignment(Qt.AlignCenter)
+        self.lbl_closed = QLabel()
+        self.lbl_closed.setAlignment(Qt.AlignCenter)
+        self.lbl_closed.setWordWrap(True)
+        self._set_connect_message("Serial Connection Closed")
         
         green_hover = hex_to_rgba(GREEN, 0.1)
         green_pressed = hex_to_rgba(GREEN, 0.2)
@@ -352,7 +356,7 @@ class OSConsoleWidget(QWidget):
         """)
         self.btn_connect.clicked.connect(self.connect_serial)
         
-        conn_layout.addWidget(lbl_closed)
+        conn_layout.addWidget(self.lbl_closed)
         conn_layout.addWidget(self.btn_connect, alignment=Qt.AlignCenter)
         self.term_stack.addWidget(page_connect)
 
@@ -505,7 +509,14 @@ class OSConsoleWidget(QWidget):
         self.lbl_set_port.setText(port)
         self.lbl_set_baud.setText(str(baud))
 
+    def _set_connect_message(self, text, error=False):
+        """Mensagem da tela 'Open Connection' (em vermelho quando a última conexão falhou)."""
+        self.lbl_closed.setText(text)
+        self.lbl_closed.setStyleSheet(f"color: {RED if error else TEXT_SECONDARY}; font-family: monospace; "
+                                      f"border: none; margin-bottom: 10px;")
+
     def connect_serial(self):
+        self._set_connect_message("Serial Connection Closed")
         # CORREÇÃO ADICIONAL: Garante que lê as configurações mais recentes imediatamente antes de abrir a porta
         self.target_port = self.conn_mgr.get_port()
         self.target_baud = self.conn_mgr.get_baud()
@@ -539,6 +550,8 @@ class OSConsoleWidget(QWidget):
         for btn in self.macro_buttons:
             btn.setEnabled(True)
 
+        # No Windows a porta COM é exclusiva: pede ao dono atual (ex.: lab 1) que a libere
+        self.conn_mgr.claim_port("os_console", self.disconnect_serial)
         self.worker = SerialMonitorWorker(port=self.target_port, baud=self.target_baud, payload=payload)
         self.worker.log_msg.connect(self.display_sys_log)
         self.worker.rx_data.connect(self.append_terminal_text)
@@ -552,6 +565,7 @@ class OSConsoleWidget(QWidget):
         self.console_output.moveCursor(QTextCursor.End)
 
     def disconnect_serial(self):
+        self.conn_mgr.release_port("os_console")
         if self.worker:
             self.worker.stop()
             self.worker.wait()
@@ -568,7 +582,11 @@ class OSConsoleWidget(QWidget):
             btn.setEnabled(False)
 
     def on_worker_finished(self):
+        # Só há erro quando o worker terminou sozinho (desconexão manual já zerou self.worker)
+        error = self.worker.error if self.worker else None
         self.disconnect_serial()
+        if error:
+            self._set_connect_message(f"Falha na conexão: {error}", error=True)
 
     def send_macro(self, cmd):
         if self.worker and self.worker.running:

@@ -160,6 +160,8 @@ class MainController:
         if self.debug_ser is None or not self.debug_ser.is_open:
             port = self.conn_mgr.get_port()
             baud = self.conn_mgr.get_baud()
+            # Pede a porta ao dono atual (OS Console / Neural Network), que a fecha antes
+            self.conn_mgr.claim_port("rv32i", self.close_serial)
             try:
                 self.debug_ser = serial.Serial(port, baud, rtscts=False, dsrdtr=False, timeout=0.1)
                 self.debug_ser.rts = False
@@ -167,12 +169,14 @@ class MainController:
                 self.debug_ser.write(b'\xCA\xFE\xBA\xBE')
                 self.display_log("Debugger Conectado. HW Interceptado.", "info")
             except Exception as e:
+                self.conn_mgr.release_port("rv32i")
                 self.display_log(f"Erro ao abrir porta de debug: {e}", "error")
                 return None
         return self.debug_ser
 
     def close_serial(self):
         """Volta forçadamente para o Modo de Simulação Local."""
+        self.conn_mgr.release_port("rv32i")
         if self.debug_ser and self.debug_ser.is_open:
             self.debug_ser.rts = True 
             self.debug_ser.close()
