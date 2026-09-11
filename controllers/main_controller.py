@@ -415,7 +415,7 @@ class MainController:
                             # Caso contrário, mantém o comportamento original de Debug / Breakpoint (Lab 1)
                             chunk = ser.read(ser.in_waiting)
                             if b'\xBB' in chunk: 
-                                self.display_log("🚨 BREAKPOINT DE HARDWARE ATINGIDO!", "error")
+                                self.display_log("BREAKPOINT DE HARDWARE ATINGIDO!", "error")
                                 self.run_timer.stop()
                                 self.hw_running = False
                                 self.view.set_run_state(False)

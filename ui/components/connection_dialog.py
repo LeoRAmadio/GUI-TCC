@@ -90,8 +90,8 @@ class ConnectionConfigDialog(QDialog):
         self.baud_input.addItems(["9600", "115200", "460800", "921600", "1000000"])
         self.baud_input.setCurrentText(str(self.conn_mgr.get_baud()))
 
-        layout.addRow("🔌 PORTA SERIAL:", self.port_input)
-        layout.addRow("⚡ BAUD RATE:", self.baud_input)
+        layout.addRow("PORTA SERIAL:", self.port_input)
+        layout.addRow("BAUD RATE:", self.baud_input)
 
         # 4. Criamos uma linha de botões manualmente para garantir a estabilidade do CSS
         btn_layout = QHBoxLayout()

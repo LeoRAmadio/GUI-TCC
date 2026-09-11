@@ -109,7 +109,7 @@ class RV32IWidget(QWidget):
         editor_label = QLabel("Código Assembly")
         editor_label.setStyleSheet("font-weight:700; color:#8B9BB4; background-color: transparent;")
         top_editor_layout.addWidget(editor_label)
-        self.mode_indicator = QLabel("⚡ MODO: SIMULAÇÃO LOCAL")
+        self.mode_indicator = QLabel("MODO: SIMULAÇÃO LOCAL")
         self.mode_indicator.setStyleSheet("color: #3b82f6; font-weight: bold; padding-left: 15px; background: transparent;")
         top_editor_layout.addWidget(self.mode_indicator)
         top_editor_layout.addStretch()
@@ -153,9 +153,7 @@ class RV32IWidget(QWidget):
         reg_widget = QWidget()
         reg_layout = QVBoxLayout(reg_widget)
         reg_layout.setContentsMargins(0,0,0,0)
-        reg_title = QLabel("📊 Banco de Registradores (RegFile)")
-        reg_title.setStyleSheet("font-weight:700; color:#8B9BB4; margin-bottom: 5px; background-color: transparent;")
-        reg_layout.addWidget(reg_title)
+        reg_layout.addLayout(self._section_title('fa5s.table', "Banco de Registradores (RegFile)"))
         
         self.reg_table = QTableWidget(32, 3)
         self.reg_table.setStyleSheet(tabela_moderna_css)
@@ -177,9 +175,8 @@ class RV32IWidget(QWidget):
         self.mem_widget = QWidget() 
         mem_layout = QVBoxLayout(self.mem_widget)
         mem_layout.setContentsMargins(0,0,0,0)
-        mem_title = QLabel("🗄️ Memória RAM (Data)")
-        mem_title.setStyleSheet("font-weight:700; color:#8B9BB4; margin-bottom: 5px; margin-top: 10px; background-color: transparent;")
-        mem_layout.addWidget(mem_title)
+        mem_layout.addSpacing(10)
+        mem_layout.addLayout(self._section_title('fa5s.database', "Memória RAM (Data)"))
         
         self.mem_table = QTableWidget(0, 2)
         self.mem_table.setStyleSheet(tabela_moderna_css)
@@ -228,6 +225,20 @@ class RV32IWidget(QWidget):
         self.bkp_line_idx = -1
         self.current_exec_line = -1
 
+    def _section_title(self, icon_name: str, text: str) -> QHBoxLayout:
+        """Título de painel no mesmo padrão do cabeçalho do editor (ícone flat + texto)."""
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 5)
+        icon = QLabel()
+        icon.setPixmap(qta.icon(icon_name, color='#8B9BB4').pixmap(14, 14))
+        icon.setStyleSheet("background-color: transparent;")
+        label = QLabel(text)
+        label.setStyleSheet("font-weight:700; color:#8B9BB4; background-color: transparent;")
+        layout.addWidget(icon)
+        layout.addWidget(label)
+        layout.addStretch()
+        return layout
+
     def _create_item(self, text: str, color: str = "#e2e8f0") -> QTableWidgetItem:
         item = QTableWidgetItem(text)
         item.setTextAlignment(Qt.AlignCenter)
@@ -245,11 +256,11 @@ class RV32IWidget(QWidget):
     def set_execution_mode(self, mode: str):
         """Altera os painéis e o indicador visual baseado no modo de execução."""
         if mode == 'HW':
-            self.mode_indicator.setText("🔥 MODO: FPGA (HARDWARE)")
+            self.mode_indicator.setText("MODO: FPGA (HARDWARE)")
             self.mode_indicator.setStyleSheet("color: #ef4444; font-weight: bold; padding-left: 15px; background: transparent;")
             self.mem_widget.setVisible(False) # Esconde a memória no modo FPGA
         else:
-            self.mode_indicator.setText("⚡ MODO: SIMULAÇÃO LOCAL")
+            self.mode_indicator.setText("MODO: SIMULAÇÃO LOCAL")
             self.mode_indicator.setStyleSheet("color: #3b82f6; font-weight: bold; padding-left: 15px; background: transparent;")
             self.mem_widget.setVisible(True) # Mostra a memória na simulação
 
@@ -309,12 +320,12 @@ class RV32IWidget(QWidget):
         menu = QMenu()
         menu.setStyleSheet("QMenu { background-color: #1A1D24; color: #E2E8F0; border: 1px solid #2A2F3A; } QMenu::item:selected { background-color: #3B82F6; }")
         
-        toggle_bkp_action = QAction("🔴 Toggle Breakpoint nesta linha", self)
+        toggle_bkp_action = QAction(qta.icon('fa5s.circle', color='#ef4444'), "Toggle Breakpoint nesta linha", self)
         toggle_bkp_action.triggered.connect(self.toggle_breakpoint)
         menu.addAction(toggle_bkp_action)
         
         # Adiciona a ação padrão de limpar BKP
-        clear_bkp_action = QAction("⭕ Limpar Breakpoint", self)
+        clear_bkp_action = QAction(qta.icon('fa5r.circle', color='#8B9BB4'), "Limpar Breakpoint", self)
         clear_bkp_action.triggered.connect(self.clear_breakpoint)
         menu.addAction(clear_bkp_action)
         

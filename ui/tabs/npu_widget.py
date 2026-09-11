@@ -293,8 +293,8 @@ class NPUWidget(QWidget):
                 le.setText(str(r * 3 + c + 1))
                 self.grid_input.addWidget(le, r, c + 1, Qt.AlignCenter)
                 
-            arrow = QLabel("➔")
-            arrow.setStyleSheet(f"color: {ORANGE}; font-size: 18px; font-weight: bold;")
+            arrow = QLabel()
+            arrow.setPixmap(qta.icon('fa5s.arrow-right', color=ORANGE).pixmap(16, 16))
             self.grid_input.addWidget(arrow, r, 4, Qt.AlignVCenter | Qt.AlignLeft)
 
         # 2. Matriz de Pesos B
@@ -308,8 +308,8 @@ class NPUWidget(QWidget):
                 le.setText("1" if r == c else "0")
                 self.grid_weight.addWidget(le, r, c, Qt.AlignCenter)
                 
-            arrow = QLabel("⬇")
-            arrow.setStyleSheet(f"color: {MUSTARD}; font-size: 18px; font-weight: bold;")
+            arrow = QLabel()
+            arrow.setPixmap(qta.icon('fa5s.arrow-down', color=MUSTARD).pixmap(16, 16))
             self.grid_weight.addWidget(arrow, 3, c, Qt.AlignTop | Qt.AlignHCenter)
 
         # 3. Systolic Array (PEs)

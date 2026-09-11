@@ -106,7 +106,7 @@ class IOWidget(QWidget):
 
         # Barra Superior
         top_bar = QHBoxLayout()
-        lbl_mode = QLabel("🔌 Mode:  ")
+        lbl_mode = QLabel("Mode:  ")
         lbl_mode.setObjectName("IOModeLabel")
         
         self.btn_hw = QPushButton("HARDWARE (GCC TOOLCHAIN)")

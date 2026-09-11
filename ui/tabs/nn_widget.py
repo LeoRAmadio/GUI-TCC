@@ -454,11 +454,11 @@ class NNWidget(QWidget):
         
         # Feedback mais descritivo para o fluxo de hardware
         self.lbl_status.setStyleSheet(f"color: {NEON_YELLOW}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {BORDER}; border-radius: 6px; padding: 10px;")
-        self.lbl_status.setText("Enviando Software e Pesos para os registradores (Arquitetura Output Stationary)... ⏳")
+        self.lbl_status.setText("Enviando Software e Pesos para os registradores (Arquitetura Output Stationary)...")
         
         self.worker = HardwareTrainerThread(self.conn_mgr.get_port(), self.conn_mgr.get_baud())
         # Opcional: conectar mensagens da thread para a label
-        self.worker.progress.connect(lambda msg: self.lbl_status.setText(f"Processando: {msg} ⏳"))
+        self.worker.progress.connect(lambda msg: self.lbl_status.setText(f"Processando: {msg}"))
         self.worker.finished_success.connect(self.on_training_success)
         self.worker.finished_error.connect(self.on_training_error)
         self.worker.start()
@@ -471,7 +471,7 @@ class NNWidget(QWidget):
         self.btn_hw.setStyleSheet(f"background-color: {NEON_GREEN}; color: {BG_ELEMENT}; border-radius: 6px; padding: 8px 16px; font-weight: bold;")
         
         self.lbl_status.setStyleSheet(f"color: {NEON_GREEN}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {NEON_GREEN}; border-radius: 6px; padding: 10px;")
-        self.lbl_status.setText("FPGA Programada com Sucesso! NPU populada e pronta para inferência. ✅")
+        self.lbl_status.setText("FPGA Programada com Sucesso! NPU populada e pronta para inferência.")
         
         self.unlock_interface()
 
@@ -481,7 +481,7 @@ class NNWidget(QWidget):
         self.btn_hw.setText(" Programar FPGA")
         
         self.lbl_status.setStyleSheet(f"color: {NEON_RED}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {NEON_RED}; border-radius: 6px; padding: 10px;")
-        self.lbl_status.setText(f"Erro de Comunicação: {err_msg} ❌")
+        self.lbl_status.setText(f"Erro de Comunicação: {err_msg}")
 
     # -------------------------------------------------------------
     # EVENTOS DE TEMPO REAL
@@ -556,7 +556,7 @@ class NNWidget(QWidget):
                 self._update_results(top_digit, probs)
                 self.lbl_status.setText(f"Inferncia Conv2D no Hardware | PREDIÇÃO: {top_digit} | LATÊNCIA: {latencia:.1f} ms")
             except Exception as e:
-                self.lbl_status.setText(f"Erro ao processar inferência na FPGA: {str(e)} ❌")
+                self.lbl_status.setText(f"Erro ao processar inferência na FPGA: {str(e)}")
                 self.lbl_status.setStyleSheet(f"color: {NEON_RED}; font-size: 14px; font-weight: bold; background: {BG_ELEMENT}; border: 1px solid {NEON_RED}; border-radius: 6px; padding: 10px;")
 
     def _update_results(self, top_digit, confs):
